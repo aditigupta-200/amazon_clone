@@ -4,7 +4,7 @@ import { User } from "../models/User";
 declare global {
   namespace Express {
     interface Request {
-      user?: User | JwtPayload; // Adjust type based on your implementation
+      user?: any; // Adjust type based on your implementation
     }
   }
 }

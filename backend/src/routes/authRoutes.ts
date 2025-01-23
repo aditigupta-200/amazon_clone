@@ -1,26 +1,32 @@
-import express, { Request, Response } from 'express';  // Import necessary types
-import { registerUser, loginUser } from '../controllers/authController';
+import express, { Request, Response, NextFunction } from 'express';
+import { registerUser, loginUser, logoutUser } from '../controllers/authController';
+// import { verifyToken } from '../middleware/authMiddleware';
 
 const router = express.Router();
 
-// POST route for user registration
-router.post('/register', async (req: Request, res: Response) => {
-  try {
-    await registerUser(req, res);  // Use the controller function
-  } catch (error) {
-    res.status(500).json({ message: 'Internal server error' });
-  }
-});
+/**
+ * Utility function for handling async routes.
+ * Ensures that any errors in async functions are passed to the Express error handler.
+ */
+const asyncHandler = (
+  fn: (req: Request, res: Response, next: NextFunction) => Promise<void>
+) => {
+  return (req: Request, res: Response, next: NextFunction) => {
+    fn(req, res, next).catch(next);
+  };
+};
 
-// POST route for user login
-router.post('/login', async (req: Request, res: Response) => {
-  try {
-    await loginUser(req, res);  // Use the controller function
-  } catch (error) {
-    res.status(500).json({ message: 'Internal server error' });
-  }
-});
+// Public routes
+router.post('/register', asyncHandler(async (req, res, next) => {
+  await registerUser(req, res);
+}));
+router.post('/login', asyncHandler(async (req, res, next) => {
+  await loginUser(req, res);
+}));
+
+// Protected routes
+router.post('/logout', asyncHandler(async (req, res, next) => {
+  await logoutUser(req, res);
+}));
 
 export default router;
-
-

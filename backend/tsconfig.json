@@ -127,6 +127,6 @@
     },
     "typeRoots": ["./node_modules/@types", "./types"]
   },
-  "include": ["src/**/*.ts", "src/types/**/*.d.ts",  "../shared/**/*" ],
+  "include": ["src/**/*.ts", "src/types/**/*.d.ts",  "../shared/**/*", "src/@types/**/*"],
   "exclude": ["node_modules"]
 }

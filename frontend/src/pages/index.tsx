@@ -5,6 +5,7 @@ import { ChevronRight, ChevronLeft } from 'lucide-react';
 import { GetServerSideProps } from 'next';
 import { fetchProducts } from '../utils/api';
 import { Product } from '../types/product';
+import { useAuth } from '../context/AuthContext';
 
 interface HomePageProps {
   featuredProducts: Product[];
@@ -12,7 +13,8 @@ interface HomePageProps {
 
 const HomePage = ({ featuredProducts }: HomePageProps) => {
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
-
+  const { user } = useAuth();
+  
   const carouselImages = [
     '/images/c1.jpg',
     '/images/c2.jpg',

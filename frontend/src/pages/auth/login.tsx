@@ -1,17 +1,20 @@
 import { useState, FormEvent } from 'react';
 import { useRouter } from 'next/router';
+import { useAuth } from '../../context/AuthContext';
 import axios from 'axios';
 
 const LoginPage = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+   const { login } = useAuth();
   const router = useRouter();
 
   const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     try {
       const { data } = await axios.post('http://localhost:5001/api/auth/login', { email, password });
-
+       localStorage.setItem('token', data.token);
+      login(data.user); // Update the user context
       alert('Login successful');
       router.push('/');
     } catch (error) {
