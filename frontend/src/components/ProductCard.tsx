@@ -1,31 +1,34 @@
+//frontend/components/ProductCard.tsx
 import React, { useState } from 'react';
 import Link from 'next/link';
 import { Product } from '../types/product';
+import { ShoppingCart, Eye } from 'lucide-react';
 
 interface ProductCardProps {
   product: Product;
+  onAddToCart: (product: Product) => void;
 }
 
-const ProductCard = ({ product }: ProductCardProps) => {
+const ProductCard = ({ product, onAddToCart }: ProductCardProps) => {
   const [isHovered, setIsHovered] = useState(false);
 
   return (
     <div
-      className="relative group bg-white border rounded-xl shadow-sm hover:shadow-xl transition-all duration-300 overflow-hidden h-[400px]"
+      className="relative group bg-white border rounded-xl shadow-sm hover:shadow-xl transition-all duration-300 overflow-hidden h-[500px] flex flex-col"
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
     >
       {/* Image Container */}
-      <div className="relative h-48 p-2 bg-white">
+      <div className="relative h-64 p-2 bg-white">
         <img
           src={product.imageUrl}
           alt={product.name}
-          className="w-full h-full object-fit border rounded"
+          className="w-full h-full object-cover border rounded"
         />
       </div>
 
       {/* Content Container */}
-      <div className="p-4 flex flex-col h-[calc(400px-192px)]">
+      <div className="p-4 flex-grow flex flex-col">
         {/* Category Badge */}
         <div className="mb-2">
           <span className="text-xs font-medium bg-blue-100 text-blue-800 px-2 py-1 rounded-full">
@@ -38,13 +41,13 @@ const ProductCard = ({ product }: ProductCardProps) => {
           {product.name}
         </h2>
 
-        <p className="text-gray-600 text-sm mb-4 flex-grow line-clamp-2">
+        <p className="text-gray-600 text-sm mb-4 flex-grow line-clamp-3">
           {product.description}
         </p>
 
         {/* Bottom Section */}
         <div className="mt-auto">
-          <div className="flex justify-between items-center mb-2">
+          <div className="flex justify-between items-center mb-4">
             <span className="text-xl font-bold text-gray-900">
               ${product.price.toFixed(2)}
             </span>
@@ -59,6 +62,23 @@ const ProductCard = ({ product }: ProductCardProps) => {
                 ? `In Stock: ${product.stockQuantity}`
                 : 'Out of Stock'}
             </span>
+          </div>
+
+          {/* Action Buttons */}
+          <div className="flex space-x-2">
+            <Link 
+              href={`/products/${product._id}`}
+              className="flex-1 flex items-center justify-center bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600 transition"
+            >
+              <Eye className="mr-2 w-5 h-5" /> View Details
+            </Link>
+            <button 
+              onClick={() => onAddToCart(product)}
+              disabled={product.stockQuantity === 0}
+              className="flex-1 flex items-center justify-center bg-green-500 text-white px-4 py-2 rounded hover:bg-green-600 transition disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              <ShoppingCart className="mr-2 w-5 h-5" /> Add to Cart
+            </button>
           </div>
         </div>
       </div>

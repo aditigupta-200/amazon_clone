@@ -8,5 +8,6 @@ export interface Product {
   category: string;
   stockQuantity: number;
   createdAt?: Date;
+  updatedAt?: Date;
 }
 

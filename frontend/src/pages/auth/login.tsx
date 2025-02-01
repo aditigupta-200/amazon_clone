@@ -12,7 +12,7 @@ const LoginPage = () => {
   const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     try {
-      const { data } = await axios.post('http://localhost:5001/api/auth/login', { email, password });
+      const { data } = await axios.post<LoginResponse>('http://localhost:5001/api/auth/login', { email, password });
        localStorage.setItem('token', data.token);
       login(data.user); // Update the user context
       alert('Login successful');

@@ -1,44 +1,7 @@
-// // models/Product.ts
-// import mongoose from 'mongoose';
 
-// const productSchema = new mongoose.Schema({
-//   name: {
-//     type: String,
-//     required: true,
-//   },
-//   description: {
-//     type: String,
-//     required: true,
-//   },
-//   price: {
-//     type: Number,
-//     required: true,
-//   },
-//   image: {
-//     type: String,
-//     required: true,
-//   },
-//   category: {
-//     type: String,
-//     required: true,
-//   },
-//   featured: {
-//     type: Boolean,
-//     default: false,
-//   },
-//   bestSeller: {
-//     type: Boolean,
-//     default: false,
-//   }
-// }, {
-//   timestamps: true
-// });
-
-// const Product = mongoose.model('Product', productSchema);
-// export default Product;
-
+//frontend/models/product.ts
 import mongoose, { Schema, Document } from 'mongoose';
-import { Product } from '../../../shared/types/product';  // Update the import path
+import { Product } from '../types/product';  // Update the import path
 
 const productSchema = new Schema<Product & Document>(
   {

@@ -168,6 +168,9 @@ import React, { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/router";
 import { useAuth } from '../context/AuthContext';
+import { Product } from "../types/product";
+import { getProducts } from '../utils/api';
+
 
 import {
   Search,
@@ -183,6 +186,7 @@ const Header: React.FC = () => {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const router = useRouter();
   const { user, logout } = useAuth();
+  const [cart, setCart] = useState<{[key: string]: number}>({});
 
   const categories = [
     "Electronics", "Fashion", "Home & Kitchen", "Books", 
@@ -196,6 +200,17 @@ const Header: React.FC = () => {
       router.push(`/search?q=${encodeURIComponent(searchQuery)}`);
     }
   };
+
+  const handleAddToCart = (product: Product) => {
+      setCart(prevCart => {
+        // Ensure product._id exists and convert to string
+        const productId = product._id ? product._id.toString() : 'unknown';
+        return {
+          ...prevCart,
+          [productId]: (prevCart[productId] || 0) + 1
+        };
+      });
+    };
 
   const handleLogin = () => {
     router.push("/auth/login");
@@ -291,7 +306,7 @@ const Header: React.FC = () => {
               <span className="absolute -top-2 -right-1 bg-yellow-400 text-black rounded-full w-5 h-5 flex items-center justify-center text-xs font-bold">
                 0
               </span>
-              <span className="ml-2 hidden md:inline">Cart</span>
+              <span className="ml-2 hidden md:inline">Cart ({Object.keys(cart).length})</span>
             </Link>
           </div>
         </div>

@@ -3,9 +3,11 @@ import { useState } from 'react';
 import { useRouter } from 'next/router';
 import { Product } from '../types/product';
 import { addProduct } from '../utils/api';
+import { useProducts } from '../context/ProductContext';
 
 const ProductForm = () => {
   const router = useRouter();
+   const { addProduct: addProductToContext } = useProducts();
   const [formData, setFormData] = useState<Omit<Product, '_id'>>({
     name: '',
     description: '',
@@ -18,7 +20,8 @@ const ProductForm = () => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
-      await addProduct(formData);
+      const newProduct = await addProduct(formData);
+      addProductToContext(newProduct);
       router.push('/products');
     } catch (error) {
       console.error('Error adding product:', error);
