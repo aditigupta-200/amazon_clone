@@ -170,6 +170,8 @@ import { useRouter } from "next/router";
 import { useAuth } from '../context/AuthContext';
 import { Product } from "../types/product";
 import { getProducts } from '../utils/api';
+import { useCart } from '@/hooks/useCart';
+import { Badge } from '@/components/ui/badge';
 
 
 import {
@@ -181,12 +183,18 @@ import {
   UserCircle,
 } from "lucide-react";
 
+
+
 const Header: React.FC = () => {
   const [searchQuery, setSearchQuery] = useState("");
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const router = useRouter();
   const { user, logout } = useAuth();
   const [cart, setCart] = useState<{[key: string]: number}>({});
+  const { items, addItem } = useCart();
+
+  const cartItemCount = items.reduce((total, item) => total + item.quantity, 0);
+
 
   const categories = [
     "Electronics", "Fashion", "Home & Kitchen", "Books", 
@@ -297,17 +305,27 @@ const Header: React.FC = () => {
               </button>
             )}
 
-            {/* Cart */}
+
             <Link
-              href="/cart"
+            href="/cart"
               className="text-white flex items-center hover:bg-gray-800 px-3 py-2 rounded-lg relative text-base"
-            >
-              <ShoppingCart className="w-5 h-5" />
+          >
+              <ShoppingCart className="h-5 w-5" />
+              <span className="ml-2 hidden md:inline">
+                Cart
               <span className="absolute -top-2 -right-1 bg-yellow-400 text-black rounded-full w-5 h-5 flex items-center justify-center text-xs font-bold">
-                0
-              </span>
-              <span className="ml-2 hidden md:inline">Cart ({Object.keys(cart).length})</span>
-            </Link>
+
+              {cartItemCount > 0 && (
+                <Badge 
+                  variant="secondary" 
+                  className="ml-1 bg-white text-green-600"
+                >
+                  {cartItemCount}
+                </Badge>
+                )}
+                </span>
+                </span>
+          </Link>
           </div>
         </div>
       </div>

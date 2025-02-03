@@ -53,7 +53,7 @@ const ProductsPage = () => {
           >
             Add New Product
           </Link>
-          <Link
+          {/* <Link
             href="/cart"
             className="relative inline-flex items-center justify-center rounded-md text-sm font-medium"
           >
@@ -69,7 +69,7 @@ const ProductsPage = () => {
                 </Badge>
               )}
             </div>
-          </Link>
+          </Link> */}
         </div>
       </div>
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">

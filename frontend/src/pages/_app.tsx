@@ -8,6 +8,7 @@ import Footer from '../components/Footer';
 import { AuthProvider } from '../context/AuthContext';
 import { ProductProvider } from '../context/ProductContext';
 import { CartProvider } from '@/context/CardContext';
+import { Toaster } from 'react-hot-toast';
 
 const inter = Inter({ subsets: ['latin'] });
 const queryClient = new QueryClient();
@@ -17,7 +18,8 @@ const App = ({ Component, pageProps }: AppProps) => {
     // Wrap everything with AuthProvider
     <AuthProvider>
       <CartProvider>
-      <ProductProvider>
+        <ProductProvider>
+          <Toaster position="top-right" />
       <div className="flex flex-col min-h-screen">
         <Header />
         <main className="flex-grow">

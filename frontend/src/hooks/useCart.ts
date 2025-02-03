@@ -1,4 +1,3 @@
-// src/hooks/useCart.ts
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 import { CartItem, Product } from '../types/product';
@@ -9,6 +8,7 @@ interface CartStore {
   removeItem: (productId: string) => void;
   updateQuantity: (productId: string, quantity: number) => void;
   clearCart: () => void;
+  setStock: (productId: string, stockQuantity: number) => void;
 }
 
 export const useCart = create<CartStore>()(
@@ -40,9 +40,17 @@ export const useCart = create<CartStore>()(
           ),
         })),
       clearCart: () => set({ items: [] }),
+
+      // This function is used to update stock when quantity is changed in cart or added to cart.
+      setStock: (productId: string, stockQuantity: number) =>
+        set((state) => ({
+          items: state.items.map((item) =>
+            item._id === productId ? { ...item, stockQuantity } : item
+          ),
+        })),
     }),
     {
-      name: 'cart-storage',
+      name: 'cart-storage', // persisting the cart state
     }
   )
 );

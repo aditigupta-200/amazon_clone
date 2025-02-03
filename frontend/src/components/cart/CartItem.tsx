@@ -3,41 +3,57 @@ import Image from 'next/image';
 import { Minus, Plus, Trash2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { CartItem as CartItemType } from '@/types/product';
+import { useCart } from '@/hooks/useCart';
 
 interface CartItemProps {
-  id?: string;
   item: CartItemType;
-  updateQuantity: (id: string, quantity: number) => void;
-  removeItem: (id: string) => void;
 }
 
-export function CartItem({ id, item, updateQuantity, removeItem }: CartItemProps) {
-  const handleUpdateQuantity = (id: string | undefined, quantity: number) => {
-    if (id) updateQuantity(id, quantity);
+export function CartItem({ item }: CartItemProps) {
+  const updateQuantity = useCart((state) => state.updateQuantity);
+  const removeItem = useCart((state) => state.removeItem);
+  const setStock = useCart((state) => state.setStock);
+
+  const handleUpdateQuantity = (quantity: number) => {
+    if (item._id) {
+      // Adjust stock when quantity changes
+      const quantityChange = quantity - (item.quantity || 1);
+      setStock(item._id, item.stockQuantity - quantityChange);  // Adjust stock value
+      updateQuantity(item._id, Math.max(1, quantity));  // Update quantity in cart
+    }
   };
 
-  const handleRemoveItem = (id: string | undefined) => {
-    if (id) removeItem(id);
+  const handleRemoveItem = () => {
+    if (item._id) {
+      // Restore stock when item is removed from cart
+      setStock(item._id, item.stockQuantity + (item.quantity || 1));
+      removeItem(item._id);
+    }
   };
+
+  const itemTotal = item.price * (item.quantity || 1);
 
   return (
     <div className="flex items-center space-x-4 py-4 border-b">
       <div className="relative w-24 h-24">
-        <img
+        <Image
           src={item.imageUrl}
           alt={item.name}
-          className="object-cover rounded w-full h-full"
+          fill
+          className="object-cover rounded"
         />
       </div>
       <div className="flex-1">
         <h3 className="font-medium">{item.name}</h3>
-        <p className="text-sm text-muted-foreground">${item.price}</p>
+        <p className="text-sm text-muted-foreground">
+          ${itemTotal.toFixed(2)} (${item.price} each)
+        </p>
       </div>
       <div className="flex items-center space-x-2">
         <Button
           variant="outline"
           size="icon"
-          onClick={() => handleUpdateQuantity(item.id, Math.max(1, (item.quantity || 1) - 1))}
+          onClick={() => handleUpdateQuantity((item.quantity || 1) - 1)}
         >
           <Minus className="h-4 w-4" />
         </Button>
@@ -45,14 +61,14 @@ export function CartItem({ id, item, updateQuantity, removeItem }: CartItemProps
         <Button
           variant="outline"
           size="icon"
-          onClick={() => handleUpdateQuantity(item.id, (item.quantity || 1) + 1)}
+          onClick={() => handleUpdateQuantity((item.quantity || 1) + 1)}
         >
           <Plus className="h-4 w-4" />
         </Button>
         <Button
           variant="destructive"
           size="icon"
-          onClick={() => handleRemoveItem(item.id)}
+          onClick={handleRemoveItem}
         >
           <Trash2 className="h-4 w-4" />
         </Button>
