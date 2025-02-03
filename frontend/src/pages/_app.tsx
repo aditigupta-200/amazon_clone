@@ -2,10 +2,15 @@
 import '../styles/globals.css';
 import type { AppProps } from 'next/app';
 import Header from '../components/Header';
+import { Inter } from 'next/font/google';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import Footer from '../components/Footer';
 import { AuthProvider } from '../context/AuthContext';
 import { ProductProvider } from '../context/ProductContext';
 import { CartProvider } from '@/context/CardContext';
+
+const inter = Inter({ subsets: ['latin'] });
+const queryClient = new QueryClient();
 
 const App = ({ Component, pageProps }: AppProps) => {
   return (
