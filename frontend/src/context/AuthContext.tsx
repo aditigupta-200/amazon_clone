@@ -72,8 +72,17 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 // Custom hook to use AuthContext
 export const useAuth = () => {
   const context = useContext(AuthContext);
+
   if (!context) {
     throw new Error('useAuth must be used within an AuthProvider');
   }
-  return context;
+
+  const { user, login, logout } = context;
+
+  return {
+    user,
+    isAuthenticated: !!user,
+    login,
+    logout,
+  };
 };
