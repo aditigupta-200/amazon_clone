@@ -5,26 +5,25 @@ import jwt from 'jsonwebtoken';
 
 const JWT_SECRET = process.env.JWT_SECRET || 'your_jwt_secret';
 
-// Define the decoded token structure
 interface DecodedToken {
   id: string;
   email: string;
-  role: 'admin' | 'user'; // Ensure role is part of the token
+  role: 'admin' | 'user';
 }
 
-// Middleware function to verify token and attach user info
-const authMiddleware = (req: NextApiRequest) => {
-  const token = req.headers.authorization?.split(' ')[1]; // Extract token from headers
-  if (!token) throw new Error('Unauthorized: No token provided from product.ts');
-  
+// Middleware function to verify the token and return user info
+const authMiddleware = (req: NextApiRequest): DecodedToken => {
+  const token = req.headers.authorization?.split(' ')[1];
+  if (!token) throw new Error('Unauthorized: No token provided');
+
   try {
-    return jwt.verify(token, JWT_SECRET) as DecodedToken; // Verify and return decoded token
-  } catch (error) {
+    return jwt.verify(token, JWT_SECRET) as DecodedToken;
+  } catch {
     throw new Error('Unauthorized: Invalid token');
   }
 };
 
-// Middleware function to check if user is admin
+// Function to check if the user has admin privileges
 const isAdmin = (user: DecodedToken) => {
   if (user.role !== 'admin') throw new Error('Access Denied: Admins only');
 };
@@ -35,34 +34,45 @@ export default async function handler(
 ) {
   await dbConnect();
 
-  // Handle authentication and authorization
   try {
     if (req.method === 'POST') {
-      // Perform authentication
+      // Authorization check
       const user = authMiddleware(req);
-
-      // Check if the user is an admin
       isAdmin(user);
 
-      // Add product logic
+      // Validate request body
+      const { name, category, price, description } = req.body;
+      if (!name || !category || !price) {
+        res.status(400).json({ error: 'Missing required fields: name, category, or price' });
+        return;
+      }
+
       const product = await ProductModel.create(req.body);
       res.status(201).json(product);
       return;
     }
 
     if (req.method === 'GET') {
-      const products = await ProductModel.find({});
+      const { q, category } = req.query;
+      const filter: any = {};
+
+      // Search by name (case-insensitive)
+      if (q) filter.name = { $regex: q.toString(), $options: 'i' };
+
+      // Filter by category (ignore "All Categories")
+      if (category && category !== 'All Categories') filter.category = category;
+
+      const products = await ProductModel.find(filter);
       res.status(200).json(products);
       return;
     }
 
     res.status(405).json({ error: 'Method not allowed' });
-  } catch (error: unknown) {
-    // Type assertion to let TypeScript know that error is an instance of Error
-    if (error instanceof Error) {
-      res.status(401).json({ error: error.message });
+  } catch (error: any) {
+    if (error.message.includes('Unauthorized') || error.message.includes('Access Denied')) {
+      res.status(403).json({ error: error.message });
     } else {
-      res.status(500).json({ error: 'Unknown error occurred' });
+      res.status(500).json({ error: error.message || 'Unknown server error' });
     }
   }
 }
