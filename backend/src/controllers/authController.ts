@@ -50,6 +50,7 @@ export const loginUser = async (req: Request, res: Response): Promise<void> => {
       res.status(404).json({ error: 'User not found' });
       return;
     }
+    console.log('User found:', user);
 
     // Validate the password
     const isPasswordCorrect = await bcrypt.compare(password, user.password);
@@ -64,11 +65,12 @@ export const loginUser = async (req: Request, res: Response): Promise<void> => {
       JWT_SECRET,
       { expiresIn: '1h' }
     );
-
+    
+    console.log('User logged in:', user);
     res.status(200).json({ 
       message: 'Login successful',
       token, 
-      user: { name: user.name, email: user.email }
+      user: { name: user.name, email: user.email , role: user.role }
     });
   } catch (error) {
     console.error('Error during login:', error);

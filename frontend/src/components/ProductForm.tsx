@@ -19,13 +19,14 @@ const ProductForm = () => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    try {
-      const newProduct = await addProduct(formData);
-      addProductToContext(newProduct);
-      router.push('/products');
-    } catch (error) {
-      console.error('Error adding product:', error);
-    }
+  try {
+  const newProduct = await addProduct(formData);
+  addProductToContext(newProduct);
+  router.push('/products');
+} catch (error) {
+  console.error('Error adding product:', error);
+  alert('Failed to add product, please try again!');
+}
   };
 
   return (

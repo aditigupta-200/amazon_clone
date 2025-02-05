@@ -29,6 +29,13 @@ const ProductsPage = () => {
     fetchProducts();
   }, []);
 
+  useEffect(() => {
+    console.log("user",user);
+  }, [
+    
+  ]);
+
+
   const cartItemCount = items.reduce((total, item) => total + item.quantity, 0);
 
   const handleAddToCart = (product: Product) => {
@@ -58,12 +65,17 @@ const ProductsPage = () => {
       <div className="flex justify-between items-center mb-8 py-2">
         <h1 className="text-3xl font-bold">Our Products</h1>
         <div className="flex space-x-4 items-center">
-          <button 
-            onClick={handleAddProduct} 
-            className="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600 transition"
-          >
-            Add New Product
-          </button>
+        <div className="text-lg font-semibold text-gray-700 py-4">
+        Logged in as: <span className="text-blue-600">{user?.role || 'Guest'}</span>
+      </div>
+          {user?.role === 'admin' && (
+            <button
+              onClick={handleAddProduct}
+              className="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600 transition"
+            >
+              Add New Product
+            </button>
+          )}
           <Link
             href="/cart"
             className="relative inline-flex items-center justify-center rounded-md text-sm font-medium"

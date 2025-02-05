@@ -45,19 +45,30 @@ export const deleteProduct = async (id: string): Promise<void> => {
 
 export const addProduct = async (productData: Omit<Product, '_id'>): Promise<Product> => {
   try {
+    const token = localStorage.getItem('token'); // Retrieve token from localStorage or sessionStorage
+    console.log("token is ",token);
+    if (!token) throw new Error('No authentication token found');
+
     const response = await fetch(API_PRODUCT_URL, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}` // Attach token
       },
       body: JSON.stringify(productData),
     });
+    
+    if (!response.ok) {
+      throw new Error('Failed to add product');
+    }
+
     const data: Product = await response.json();
     return data;
   } catch (error) {
-    throw new Error('Failed to add product');
+    throw new Error(error.message || 'Failed to add product');
   }
 };
+
 
 export const getProducts = async (): Promise<Product[]> => {
   try {
