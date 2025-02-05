@@ -20,14 +20,12 @@ const ProductForm = () => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
-      const token = localStorage.getItem('token');
-      console.log("token is",token);
-      // Retrieve the token from local storage or wherever you store it
+      const token = localStorage.getItem('token'); // Retrieve the token from local storage or wherever you store it
       const response = await fetch('/api/products', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`, // Include the token in the Authorization header
+          'Authorization':` Bearer ${token}`, // Include the token in the Authorization header
         },
         body: JSON.stringify(formData),
       });
@@ -39,10 +37,7 @@ const ProductForm = () => {
       const newProduct = await response.json();
       addProductToContext(newProduct);
       router.push('/products');
- // Navigate to the category page
- if (formData.category) {
-      router.push(`/categories/${formData.category.toLowerCase()}`);
-    }    } catch (error) {
+    } catch (error) {
       console.error('Error adding product:', error);
       alert('Failed to add product, please try again!');
     }

@@ -1,168 +1,3 @@
-// import React, { useState } from "react";
-// import Link from "next/link";
-// import { useRouter } from "next/router";
-// import { useAuth } from '../context/AuthContext';
-
-// import {
-//   Search,
-//   ShoppingCart,
-//   Menu,
-//   MapPin,
-//   User,
-//   Package,
-//   Heart,
-//   Bell,
-//   ChevronDown,
-// } from "lucide-react";
-
-// const Header: React.FC = () => {
-//   const [searchQuery, setSearchQuery] = useState("");
-//   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
-//   const router = useRouter();
-//   const { user, logout } = useAuth();
-
-//   const categories = [
-//     "Electronics",
-//     "Fashion",
-//     "Home & Kitchen",
-//     "Books",
-//     "Toys & Games",
-//     "Beauty",
-//     "Sports",
-//     "Automotive",
-//     "Health",
-//     "Pet Supplies",
-//   ];
-
-//   const handleSearch = (e: React.FormEvent) => {
-//     e.preventDefault();
-//     if (searchQuery.trim()) {
-//       router.push(`/search?q=${encodeURIComponent(searchQuery)}`);
-//     }
-//   };
-
-//   const handleLogin = () => {
-//     router.push("/auth/login");
-//   };
-
-//   return (
-//     <header className="bg-gray-900 sticky top-0 z-50">
-//       {/* Upper Header */}
-//       <div className="border-b border-gray-700">
-//         <div className="flex items-center h-16">
-//           {/* Logo */}
-//           <Link
-//             href="/"
-//             className="text-white font-bold text-2xl px-4 h-full flex items-center border-r border-gray-700 hover:bg-gray-800 transition-colors"
-//           >
-//             Amazon
-//           </Link>
-//           {/* Search Bar */}
-//           <form
-//             onSubmit={handleSearch}
-//             className="flex-1 flex h-10 my-auto mx-4"
-//           >
-//             <div className="relative flex-1 flex">
-//               <select className="px-3 rounded-l-md border-r border-gray-300 bg-gray-100 text-sm hover:bg-gray-200 transition-colors cursor-pointer">
-//                 <option>All Categories</option>
-//                 {categories.map((cat) => (
-//                   <option key={cat}>{cat}</option>
-//                 ))}
-//               </select>
-//               <input
-//                 type="text"
-//                 className="w-full px-4 outline-none"
-//                 placeholder="Search products, brands and categories..."
-//                 value={searchQuery}
-//                 onChange={(e) => setSearchQuery(e.target.value)}
-//               />
-//               <button
-//                 type="submit"
-//                 className="bg-yellow-400 hover:bg-yellow-500 px-8 rounded-r-md transition-colors"
-//               >
-//                 <Search className="w-5 h-5" />
-//               </button>
-//             </div>
-//           </form>
-
-//           {/* Right Section */}
-//       <div className="flex h-full">
-
-//              <div className="relative group">
-//             <div className="space-x-4">
-//           {/* Show username if logged in, otherwise show login button */}
-//           {user ? (
-//             <>
-//               <span className="h-full px-4 text-white border-l border-gray-700 hover:bg-gray-800 transition-colors flex items-center"
-//                   >
-//                     {user.name}</span>
-//               <button onClick={logout} className="px-4 py-2 bg-red-500 rounded">
-//                 Logout
-//               </button>
-//             </>
-//           ) : (
-
-//               <button
-//                 onClick={handleLogin}
-//                 className="h-full px-4 text-white border-l border-gray-700 hover:bg-gray-800 transition-colors flex items-center"
-//                     >
-//                       <div className="text-sm mr-1">
-//                   <div className="font-bold flex items-center">
-//                           Login
-//                         <ChevronDown className="w-4 h-4 ml-1" />
-//                          </div>
-//                 </div>
-//                     </button>
-//           )}
-//         </div>
-
-// {/* Product page */}
-//             <Link href="/products"
-//               className="h-full px-4 text-white border-l border-gray-700 hover:bg-gray-800 transition-colors flex items-center">
-//               Products
-//             </Link>
-
-//             {/* Cart */}
-//             <Link
-//               href="/cart"
-//               className="h-full px-6 text-white border-l border-gray-700 hover:bg-gray-800 transition-colors flex items-center"
-//             >
-//               <div className="relative flex items-center">
-//                 <ShoppingCart className="w-6 h-6" />
-//                 <span className="absolute -top-2 -right-2 bg-yellow-400 text-black rounded-full w-5 h-5 flex items-center justify-center text-xs font-bold">
-//                   {/* {state.items.length} */}
-//                 </span>
-//                 <span className="font-bold ml-2">Cart</span>
-//               </div>
-//             </Link>
-//           </div>
-
-//         </div>
-//       </div>
-
-//       {/* Lower Header - Categories */}
-//       <div className="flex items-center bg-gray-800 h-10 overflow-x-auto scrollbar-hide">
-//         <button className="flex items-center text-white px-4 h-full hover:bg-gray-700 transition-colors">
-//           <Menu className="w-5 h-5 mr-2" />
-//           All
-//         </button>
-//         {categories.map((category) => (
-//           <Link
-//             key={category}
-//             href={`/category/${category.toLowerCase()}`}
-//             className="text-white px-4 h-full flex items-center hover:bg-gray-700 transition-colors whitespace-nowrap"
-//           >
-//             {category}
-//           </Link>
-//         ))}
-//         </div>
-//         </div>
-//     </header>
-//   );
-// };
-
-// export default Header;
-
 import React, { useState, useEffect } from "react";
 import Link from "next/link";
 import { useRouter } from "next/router";
@@ -187,20 +22,8 @@ const Header: React.FC = () => {
 	const router = useRouter();
 	const { user, logout } = useAuth();
 	const [cart, setCart] = useState<{ [key: string]: number }>({});
-  const { items, addItem } = useCart();
-  const [selectedCategory, setSelectedCategory] = useState("All Categories");
-
-	// const currentDate = typeof window !== "undefined" ? new Date() : null;
-	// const [currentDate, setCurrentDate] = useState<Date | null>(null);
-
-	// useEffect(() => {
-	// 	setCurrentDate(new Date());
-	// }, []);
-
-	// const cartItemCount = items.reduce(
-	// 	(total, item) => total + item.quantity,
-	// 	0
-	// );
+	const { items, addItem } = useCart();
+	const [selectedCategory, setSelectedCategory] = useState("All Categories");
 	const [cartItemCount, setCartItemCount] = useState(0);
 
 	useEffect(() => {
@@ -222,12 +45,12 @@ const Header: React.FC = () => {
 		"Pet Supplies",
 	];
 
-const handleSearch = (e: React.FormEvent) => {
-  e.preventDefault();
-  const query = encodeURIComponent(searchQuery);
-  const category = encodeURIComponent(selectedCategory);
-  router.push(`/search?q=${query}&category=${category}`);
-};
+	const handleSearch = (e: React.FormEvent) => {
+		e.preventDefault();
+		const query = encodeURIComponent(searchQuery);
+		const category = encodeURIComponent(selectedCategory);
+		router.push(`/search?q=${query}&category=${category}`);
+	};
 
 	const handleAddToCart = (product: Product) => {
 		if (!user) {
@@ -235,7 +58,6 @@ const handleSearch = (e: React.FormEvent) => {
 			return;
 		}
 		setCart((prevCart) => {
-			// Ensure product._id exists and convert to string
 			const productId = product._id ? product._id.toString() : "unknown";
 			return {
 				...prevCart,
@@ -269,14 +91,18 @@ const handleSearch = (e: React.FormEvent) => {
 						className="flex-1 w-full order-last md:order-none md:max-w-3xl mx-auto my-2 md:ml-4"
 					>
 						<div className="relative flex">
-          <select
-             value={selectedCategory}
-             onChange={(e) => setSelectedCategory(e.target.value)}
-             className="px-3 py-2 rounded-l-lg border-r border-gray-300 bg-gray-100 text-base"
-          >
-                <option value="">All Categories</option>
+							<select
+								value={selectedCategory}
+								onChange={(e) =>
+									setSelectedCategory(e.target.value)
+								}
+								className="px-3 py-2 rounded-l-lg border-r border-gray-300 bg-gray-100 text-base"
+							>
+								<option value="">All Categories</option>
 								{categories.map((cat) => (
-									<option key={cat} value={cat}>{cat}</option>
+									<option key={cat} value={cat}>
+										{cat}
+									</option>
 								))}
 							</select>
 							<input
@@ -341,15 +167,14 @@ const handleSearch = (e: React.FormEvent) => {
 							<span className="ml-2 hidden md:inline">
 								Cart
 								<span className="absolute -top-2 -right-1 bg-yellow-400 text-black rounded-full w-5 h-5 flex items-center justify-center text-xs font-bold">
-									{
-										cartItemCount > 0 && (
-											<Badge
-												variant="secondary"
-												className="ml-1 bg-white text-green-600"
-											>
-												{cartItemCount}
-											</Badge>
-										)}
+									{cartItemCount > 0 && (
+										<Badge
+											variant="secondary"
+											className="ml-1 bg-white text-green-600"
+										>
+											{cartItemCount}
+										</Badge>
+									)}
 								</span>
 							</span>
 						</Link>
@@ -358,17 +183,28 @@ const handleSearch = (e: React.FormEvent) => {
 			</div>
 
 			{/* Lower Header - Categories */}
-			<div className="bg-gray-800 hidden md:block">
-				<div className="container mx-auto px-4 overflow-x-auto">
+			<div className="bg-gray-800">
+				<div className="container mx-auto px-4 py-2">
 					<div className="flex items-center">
-						<button className="flex items-center text-white px-4 py-2 text-sm hover:bg-gray-700 transition-colors">
-							<Menu className="w-4 h-4 mr-2" />
-							All
-						</button>
+						{/* <select
+							value={selectedCategory}
+							onChange={(e) => setSelectedCategory(e.target.value)}
+							className="text-white bg-gray-700 border border-gray-600 rounded-lg px-3 py-2 mr-4"
+						>
+							<option value="">All Categories</option>
+							{categories.map((cat) => (
+								<option key={cat} value={cat}>{cat}</option>
+							))}
+						</select> */}
+						<Link href={`/search?q=&category=All%20Categories`}>
+							<button className="flex items-center text-white px-4 py-2 text-sm hover:bg-gray-700 transition-colors">
+								All
+							</button>
+						</Link>
 						{categories.map((category) => (
 							<Link
 								key={category}
-								href={`/category/${category.toLowerCase()}`}
+								href={`/search?q=&category=${category}`}
 								className="text-white px-4 py-2 text-sm hover:bg-gray-700 transition-colors whitespace-nowrap"
 							>
 								{category}
@@ -379,11 +215,11 @@ const handleSearch = (e: React.FormEvent) => {
 			</div>
 
 			{/* Mobile Menu */}
-      <div className={isMobileMenuOpen ? "block" : "hidden"}>
+			<div className={isMobileMenuOpen ? "block" : "hidden"}>
 				<div className="md:hidden bg-gray-900 absolute top-full left-0 w-full shadow-lg">
 					{/* Mobile menu content remains the same as previous version */}
 				</div>
-      </div>
+			</div>
 		</header>
 	);
 };

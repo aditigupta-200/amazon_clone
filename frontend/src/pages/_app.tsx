@@ -10,7 +10,6 @@ import { ProductProvider } from '../context/ProductContext';
 import { CartProvider } from '@/context/CardContext';
 import { Toaster } from 'react-hot-toast';
 import dynamic from 'next/dynamic';
-
 const Header = dynamic(() => import("../components/Header"), { ssr: false });
 
 const inter = Inter({ subsets: ['latin'] });

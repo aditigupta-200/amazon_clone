@@ -7,7 +7,7 @@ const JWT_SECRET = process.env.JWT_SECRET || 'your_jwt_secret';
 
 // Register a new user
 export const registerUser = async (req: Request, res: Response): Promise<void> => {
-  const { name, email, password } = req.body;
+  const { name, email, password,role } = req.body;
 
   if (!name || !email || !password) {
     res.status(400).json({ error: 'All fields are required' });
@@ -24,7 +24,7 @@ export const registerUser = async (req: Request, res: Response): Promise<void> =
 
     // Hash the password and save the new user
     const hashedPassword = await bcrypt.hash(password, 10);
-    const newUser = new User({ name, email, password: hashedPassword });
+    const newUser = new User({ name, email, password: hashedPassword ,role});
     await newUser.save();
 
     res.status(201).json({ message: 'User registered successfully' });

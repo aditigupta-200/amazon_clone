@@ -128,7 +128,5 @@ const LoginPage = () => {
     </div>
   );
 };
-//bhagwan ka naam leke login kar uff party .... abhi dekh role dikh raha kya  product page me jaa waha dekh guest he hai ke kuch aur hai kaise ok 😭😭 local storage ka pic bejna
-//
+
 export default LoginPage;
-//ha hua login guest aa raha hai

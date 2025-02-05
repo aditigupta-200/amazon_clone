@@ -66,7 +66,7 @@ const ProductsPage = () => {
         <h1 className="text-3xl font-bold">Our Products</h1>
         <div className="flex space-x-4 items-center">
         <div className="text-lg font-semibold text-gray-700 py-4">
-        Logged in as: <span className="text-blue-600">{user?.role || 'Guest'}</span>
+        Logged in as: <span className="text-blue-600">{user?.role === 'admin' ? 'seller' : 'buyer'}</span>
       </div>
           {user?.role === 'admin' && (
             <button
