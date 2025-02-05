@@ -4,6 +4,9 @@ import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { toast } from 'react-hot-toast';
 import ProductModal from '@/components/ProductModal';
+import { useAuth } from '../context/AuthContext';
+import { useRouter } from "next/router";
+
 
 export interface ProductCardProps {
   product: Product;
@@ -15,8 +18,14 @@ export default function ProductCard({ product, onAddToCart }: ProductCardProps) 
   const setStock = useCart((state) => state.setStock);
   const [isHovered, setIsHovered] = useState(false);
   const [isModalOpen, setIsModalOpen] = useState(false);
-
+  const { user, logout } = useAuth();
+  const router = useRouter();
+  
   const handleAddToCart = () => {
+     if (!user) {
+    router.push('/auth/login');
+    return;
+  }
     if (!product._id) {
       console.error("Product ID is missing:", product);
       return;

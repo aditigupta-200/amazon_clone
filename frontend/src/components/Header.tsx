@@ -210,7 +210,11 @@ const Header: React.FC = () => {
   };
 
   const handleAddToCart = (product: Product) => {
-      setCart(prevCart => {
+    if (!user) {
+    router.push('/auth/login');
+    return;
+  }  
+    setCart(prevCart => {
         // Ensure product._id exists and convert to string
         const productId = product._id ? product._id.toString() : 'unknown';
         return {

@@ -1,5 +1,6 @@
 // pages/products/index.tsx
 import { useEffect, useState } from 'react';
+import { useRouter } from 'next/router';
 import Link from 'next/link';
 import { ShoppingCart } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
@@ -7,10 +8,13 @@ import { Product } from '@/types/product';
 import ProductCard from '@/components/ProductCard';
 import { getProducts } from '@/utils/api';
 import { useCart } from '@/hooks/useCart';
+import { useAuth } from '../../context/AuthContext'; 
 
 const ProductsPage = () => {
   const [products, setProducts] = useState<Product[]>([]);
   const { items, addItem } = useCart();
+  const { user } = useAuth();
+  const router = useRouter();
 
   useEffect(() => {
     const fetchProducts = async () => {
@@ -29,7 +33,6 @@ const ProductsPage = () => {
 
   const handleAddToCart = (product: Product) => {
     if (!product._id) return;
-    
     addItem({
       id: product._id.toString(),
       name: product.name,
@@ -42,18 +45,26 @@ const ProductsPage = () => {
     });
   };
 
+  const handleAddProduct = () => {
+    if (!user) {
+      router.push('/auth/login');
+      return;
+    }
+    router.push('/products/add');
+  };
+
   return (
     <div className="min-h-screen bg-gray-100 px-6">
       <div className="flex justify-between items-center mb-8 py-2">
         <h1 className="text-3xl font-bold">Our Products</h1>
         <div className="flex space-x-4 items-center">
-          <Link 
-            href="/products/add" 
+          <button 
+            onClick={handleAddProduct} 
             className="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600 transition"
           >
             Add New Product
-          </Link>
-          {/* <Link
+          </button>
+          <Link
             href="/cart"
             className="relative inline-flex items-center justify-center rounded-md text-sm font-medium"
           >
@@ -61,20 +72,17 @@ const ProductsPage = () => {
               <ShoppingCart className="h-5 w-5" />
               View Cart
               {cartItemCount > 0 && (
-                <Badge 
-                  variant="secondary" 
-                  className="ml-1 bg-white text-green-600"
-                >
+                <Badge variant="secondary" className="ml-1 bg-white text-green-600">
                   {cartItemCount}
                 </Badge>
               )}
             </div>
-          </Link> */}
+          </Link>
         </div>
       </div>
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         {Array.isArray(products) &&
-          products.map((product) => (
+          products.map((product) =>
             product._id ? (
               <ProductCard
                 key={product._id}
@@ -82,7 +90,7 @@ const ProductsPage = () => {
                 onAddToCart={() => handleAddToCart(product)}
               />
             ) : null
-          ))}
+          )}
       </div>
     </div>
   );
