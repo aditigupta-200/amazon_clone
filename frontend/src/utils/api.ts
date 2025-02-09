@@ -59,12 +59,21 @@ export const addProduct = async (productData: Omit<Product, '_id'>): Promise<Pro
   }
 };
 
-export const getProducts = async (): Promise<Product[]> => {
+export const getProducts = async (q = '', category = '') => {
   try {
-    const response = await fetch(API_PRODUCT_URL);
-    const data: Product[] = await response.json();
-    return data;
+    const query = `q=${q}&category=${category}`;
+    const response = await fetch(`/api/products?${query}`);
+    return response.json();
   } catch (error) {
+    console.error('Failed to fetch products:', error);
+    throw error;
+  }
+};
+
+export const getProductsByCategory = async (category: string) => {
+  const response = await fetch(`/api/products?category=${category}`);
+  if (!response.ok) {
     throw new Error('Failed to fetch products');
   }
+  return response.json();
 };

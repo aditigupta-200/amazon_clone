@@ -3,42 +3,66 @@ import { useRouter } from 'next/router';
 import { useAuth } from '../../context/AuthContext';
 import axios from 'axios';
 
+interface LoginResponse {
+  token: string;
+  user: {
+    id: string;
+    name: string;
+    email: string;
+    role: 'admin' | 'user';
+  };
+}
+
 const LoginPage = () => {
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-   const { login } = useAuth();
+  const [email, setEmail] = useState<string>('');
+  const [password, setPassword] = useState<string>('');
+  const [error, setError] = useState<string | null>(null);
+  const { login } = useAuth();
   const router = useRouter();
 
   const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
+    setError(null);
+
     try {
-      const { data } = await axios.post<LoginResponse>('http://localhost:5001/api/auth/login', { email, password });
-       localStorage.setItem('token', data.token);
-      login(data.user); // Update the user context
+      const { data }: { data: LoginResponse } = await axios.post<LoginResponse>(
+        'http://localhost:5001/api/auth/login', 
+        { email, password }
+      );
+
+      const { name, role } = data.user;
+      console.log("hi aditi the user role is ",data.user);
+      login({ name, role });
+
+      localStorage.setItem('token', data.token);
+
       alert('Login successful');
-      router.push('/');
-    } catch (error) {
-      alert('Login failed');
+
+      if (role === 'admin') {
+        router.push('/admin'); 
+      } else {
+        router.push('/');
+      }
+    } catch (error: any) {
+      setError(error.response?.data?.error || 'Login failed');
     }
   };
 
   return (
     <div className="min-h-screen bg-gray-50 py-12 px-4">
       <div className="max-w-sm mx-auto">
-        {/* Logo */}
         <div className="text-center mb-8">
           <h1 className="text-3xl font-bold text-black">amazon</h1>
         </div>
-        
-        {/* Login Box */}
+
         <div className="bg-white p-6 rounded shadow-md border border-gray-300">
           <h2 className="text-2xl font-normal mb-4">Sign in</h2>
-          
+
+          {error && <p className="text-red-500 text-sm mb-4">{error}</p>}
+
           <form onSubmit={handleSubmit}>
             <div className="mb-4">
-              <label className="block text-sm font-bold mb-1">
-                Email
-              </label>
+              <label className="block text-sm font-bold mb-1">Email</label>
               <input
                 type="email"
                 placeholder="Enter your email"
@@ -47,12 +71,10 @@ const LoginPage = () => {
                 onChange={(e) => setEmail(e.target.value)}
               />
             </div>
-            
+
             <div className="mb-6">
               <div className="flex justify-between">
-                <label className="block text-sm font-bold mb-1">
-                  Password
-                </label>
+                <label className="block text-sm font-bold mb-1">Password</label>
                 <a href="#" className="text-sm text-blue-600 hover:text-yellow-600 hover:underline">
                   Forgot your password?
                 </a>
@@ -92,14 +114,13 @@ const LoginPage = () => {
             Create your Amazon account
           </button>
         </div>
-        
-        {/* Footer Links */}
+
         <div className="mt-4 text-xs text-center space-x-4 text-blue-600">
           <a href="#" className="hover:text-yellow-600 hover:underline">Conditions of Use</a>
           <a href="#" className="hover:text-yellow-600 hover:underline">Privacy Notice</a>
           <a href="#" className="hover:text-yellow-600 hover:underline">Help</a>
         </div>
-        
+
         <div className="mt-4 text-xs text-center text-gray-600">
           © 1996-2025, Amazon.com, Inc. or its affiliates
         </div>

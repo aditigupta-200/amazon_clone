@@ -6,12 +6,13 @@ const RegisterPage = () => {
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [role, setRole] = useState<'user' | 'admin'>('user');
   const router = useRouter();
 
   const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
    try {
-const { data } = await axios.post('http://localhost:5001/api/auth/register', { name, email, password });
+const { data } = await axios.post('http://localhost:5001/api/auth/register', { name, email, password,role });
   alert('Registration successful');
   router.push('/auth/login');
 } catch (error: any) {
@@ -40,6 +41,22 @@ const { data } = await axios.post('http://localhost:5001/api/auth/register', { n
           <h2 className="text-2xl font-normal mb-4">Create account</h2>
           
           <form onSubmit={handleSubmit}>
+            {/* New Role Selection */}
+            <div className="mb-4">
+              <label className="block text-sm font-bold mb-1">
+                Are you a buyer or seller?
+              </label>
+              <select
+                value={role}
+                onChange={(e) => setRole(e.target.value as 'user' | 'admin')}
+                className="w-full p-2 border border-gray-400 rounded focus:border-yellow-600 focus:ring-1 focus:ring-yellow-600"
+                required
+              >
+                <option value="user">Buyer</option>
+                <option value="admin">Seller</option>
+              </select>
+            </div>
+
             <div className="mb-4">
               <label className="block text-sm font-bold mb-1">
                 Your name

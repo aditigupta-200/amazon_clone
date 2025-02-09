@@ -1,13 +1,8 @@
 import express, { Request, Response, NextFunction } from 'express';
 import { registerUser, loginUser, logoutUser } from '../controllers/authController';
-// import { verifyToken } from '../middleware/authMiddleware';
 
 const router = express.Router();
 
-/**
- * Utility function for handling async routes.
- * Ensures that any errors in async functions are passed to the Express error handler.
- */
 const asyncHandler = (
   fn: (req: Request, res: Response, next: NextFunction) => Promise<void>
 ) => {

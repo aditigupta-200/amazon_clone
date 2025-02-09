@@ -10,7 +10,7 @@ const User_1 = __importDefault(require("../models/User")); // Adjust based on yo
 const protectRoute = async (req, res, next) => {
     let token = req.headers.authorization?.split(' ')[1];
     if (!token) {
-        return res.status(401).json({ message: 'No token provided, authorization denied' });
+        return res.status(401).json({ message: 'No token provided, authorization denied protected route' });
     }
     token = token.replace('Bearer ', ''); // Remove "Bearer " prefix if it's present
     try {

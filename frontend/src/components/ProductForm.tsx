@@ -7,7 +7,7 @@ import { useProducts } from '../context/ProductContext';
 
 const ProductForm = () => {
   const router = useRouter();
-   const { addProduct: addProductToContext } = useProducts();
+  const { addProduct: addProductToContext } = useProducts();
   const [formData, setFormData] = useState<Omit<Product, '_id'>>({
     name: '',
     description: '',
@@ -20,11 +20,26 @@ const ProductForm = () => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
-      const newProduct = await addProduct(formData);
+      const token = localStorage.getItem('token'); // Retrieve the token from local storage or wherever you store it
+      const response = await fetch('/api/products', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization':` Bearer ${token}`, // Include the token in the Authorization header
+        },
+        body: JSON.stringify(formData),
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to add product');
+      }
+
+      const newProduct = await response.json();
       addProductToContext(newProduct);
       router.push('/products');
     } catch (error) {
       console.error('Error adding product:', error);
+      alert('Failed to add product, please try again!');
     }
   };
 
@@ -71,13 +86,24 @@ const ProductForm = () => {
       </div>
       <div className="mb-4">
         <label className="block mb-2">Category</label>
-        <input
-          type="text"
+        <select
           value={formData.category}
           onChange={(e) => setFormData({ ...formData, category: e.target.value })}
           className="w-full p-2 border rounded"
           required
-        />
+        >
+          <option value="">Select a category</option>
+          <option value="Electronics">Electronics</option>
+          <option value="Fashion">Fashion</option>
+          <option value="Home & Kitchen">Home & Kitchen</option>
+          <option value="Books">Books</option>
+          <option value="Toys & Games">Toys & Games</option>
+          <option value="Beauty">Beauty</option>
+          <option value="Sports">Sports</option>
+          <option value="Automotive">Automotive</option>
+          <option value="Health">Health</option>
+          <option value="Pet Supplies">Pet Supplies</option>
+        </select>
       </div>
       <div className="mb-4">
         <label className="block mb-2">Stock Quantity</label>

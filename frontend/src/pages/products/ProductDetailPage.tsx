@@ -8,8 +8,7 @@ import { ShoppingCart, Star } from 'lucide-react';
 interface ProductDetailProps {
   product: Product;
 }
-
-const ProductDetailPage = ({ product }: ProductDetailProps) => {
+const ProductDetailPage = ({ product }: ProductDetailProps) => { 
   const [quantity, setQuantity] = useState(1);
 
   const handleAddToCart = () => {
