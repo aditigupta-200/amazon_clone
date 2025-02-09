@@ -1,132 +1,159 @@
-// Backend: products.ts
+import type { NextApiRequest, NextApiResponse } from "next";
+import dbConnect from "../../lib/db";
+import { ProductModel } from "../../models/Product";
+import jwt from "jsonwebtoken";
+import { v2 as cloudinaryV2 } from "cloudinary";
+import formidable, { IncomingForm } from "formidable";
+import fs from "fs";
+import { Readable } from "stream";
 
-import type { NextApiRequest, NextApiResponse } from 'next';
-import dbConnect from '../../lib/db';
-import { ProductModel } from '../../models/Product';
-import jwt from 'jsonwebtoken';
-import multer from 'multer';
-import cloudinary from 'cloudinary';
-import { v2 as cloudinaryV2 } from 'cloudinary';
-import { Readable } from 'stream';
-import formidable, { IncomingForm } from 'formidable';
-import fs from 'fs';
+export const config = {
+	api: {
+		bodyParser: false, // Disable Next.js body parsing to allow formidable to handle it
+	},
+};
 
-const JWT_SECRET = process.env.JWT_SECRET || 'your_jwt_secret';
+const JWT_SECRET = process.env.JWT_SECRET || "your_jwt_secret";
 
 cloudinaryV2.config({
-  cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
-  api_key: process.env.CLOUDINARY_API_KEY,
-  api_secret: process.env.CLOUDINARY_API_SECRET,
+	cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
+	api_key: process.env.CLOUDINARY_API_KEY,
+	api_secret: process.env.CLOUDINARY_API_SECRET,
 });
 
 interface DecodedToken {
-  id: string;
-  email: string;
-  role: 'admin' | 'user';
+	id: string;
+	email: string;
+	role: "admin" | "user";
 }
 
 const authMiddleware = (req: NextApiRequest): DecodedToken => {
-  const token = req.headers.authorization?.split(' ')[1];
-  console.log("Received Token:", token); 
-  
-  if (!token) throw new Error('Unauthorized: No token provided');
+	const token = req.headers.authorization?.split(" ")[1];
+	if (!token) throw new Error("Unauthorized: No token provided");
 
-  try {
- const decoded = jwt.verify(token, JWT_SECRET) as DecodedToken;
-    console.log("✅ Token Decoded Successfully:", decoded);
-    return decoded;
-  } catch {
-    throw new Error('Unauthorized: Invalid token in products.ts');
-  }
+	try {
+		return jwt.verify(token, JWT_SECRET) as DecodedToken;
+	} catch {
+		throw new Error("Unauthorized: Invalid token");
+	}
 };
 
 const isAdmin = (user: DecodedToken) => {
-  if (user.role !== 'admin') throw new Error('Access Denied: Admins only');
+	if (user.role !== "admin") throw new Error("Access Denied: Admins only");
+};
+
+// Function to parse `formidable` form data
+const parseForm = async (
+	req: NextApiRequest
+): Promise<{ fields: any; files: any }> => {
+	const form = new IncomingForm({ multiples: false });
+	return new Promise((resolve, reject) => {
+		form.parse(req, (err, fields, files) => {
+			if (err) reject(err);
+			else resolve({ fields, files });
+		});
+	});
 };
 
 export default async function handler(
-  req: NextApiRequest,
-  res: NextApiResponse
+	req: NextApiRequest,
+	res: NextApiResponse
 ) {
-  await dbConnect();
+	await dbConnect();
 
-  try {
-    if (req.method === 'POST') {
-      const user = authMiddleware(req);
-      isAdmin(user);
+	try {
+		if (req.method === "POST") {
+			const user = authMiddleware(req);
+			isAdmin(user);
 
+			// Parse the form data
+			const { fields, files } = await parseForm(req);
 
-      const form = formidable({ multiples: false });
+			const { name, category, price, description, stockQuantity } =
+				fields;
 
-      const formData = req.body;
-            console.log({form})
+			// Extract first value from array (if necessary)
+			const productData = {
+				name: Array.isArray(name) ? name[0] : name,
+				category: Array.isArray(category) ? category[0] : category,
+				price: Array.isArray(price) ? Number(price[0]) : Number(price),
+				description: Array.isArray(description)
+					? description[0]
+					: description,
+				stockQuantity: Array.isArray(stockQuantity)
+					? Number(stockQuantity[0])
+					: Number(stockQuantity),
+			};
 
-      form.parse(req, async (err, fields, files) => {
-        if (err) {
-          res.status(400).json({ error: 'File upload error' });
-          return;
-        }
+			if (
+				!productData.name ||
+				!productData.category ||
+				!productData.price
+			) {
+				return res
+					.status(400)
+					.json({ error: "Missing required fields" });
+			}
 
-        console.log({fields})
+			
+			const file = files.image?.[0];
+			if (!file) {
+				return res
+					.status(400)
+					.json({ error: "Image file is required" });
+			}
 
-        const { name, category, price, description, stockQuantity, image } = fields;
-        if (!name || !category || !price) {
-          res.status(400).json({ error: 'Missing required fields' });
-          return;
-        }
+			const fileBuffer = fs.readFileSync(file.filepath);
 
-        const file = files.image?.[0];
-        if (!file) {
-  res.status(400).json({ error: 'Image file is required' });
-  return;
-        }
-        const fileBuffer = fs.readFileSync(file.filepath);
-        // const stream = Readable.from(file.buffer);
-        const uploadStream = cloudinaryV2.uploader.upload_stream(
-          { folder: 'products' },
-          async (error, result) => {
-            if (error || !result) {
-              res.status(500).json({ error: 'Image upload failed' });
-              return;
-            }
-            
-            const product = await ProductModel.create({
-              name,
-              category,
-              price,
-              description,
-              stockQuantity,
-             image,
-              imageUrl: result.secure_url,
-            });
+			// Upload image to Cloudinary
+			const uploadPromise = new Promise<string>((resolve, reject) => {
+				const uploadStream = cloudinaryV2.uploader.upload_stream(
+					{ folder: "products" },
+					(error, result) => {
+						if (error || !result) {
+							reject("Image upload failed");
+						} else {
+							resolve(result.secure_url);
+						}
+					}
+				);
+				Readable.from(fileBuffer).pipe(uploadStream);
+			});
 
-            res.status(201).json(product);
-          }
-        );
-        
-Readable.from(fileBuffer).pipe(uploadStream);
-      });
-      return;
-    }
+			const imageUrl = await uploadPromise;
 
-    if (req.method === 'GET') {
-      const { q, category } = req.query;
-      const filter: any = {};
+			// Create product in DB
+      const product = await ProductModel.create({
+        ...productData,  // ✅ Correct - Uses extracted values
+        imageUrl,
+    });
+    
 
-      if (q) filter.name = { $regex: q.toString(), $options: 'i' };
-      if (category && category !== 'All Categories') filter.category = category;
+			return res.status(201).json(product);
+		}
 
-      const products = await ProductModel.find(filter);
-      res.status(200).json(products);
-      return;
-    }
+		if (req.method === "GET") {
+			const { q, category } = req.query;
+			const filter: any = {};
 
-    res.status(405).json({ error: 'Method not allowed' });
-  } catch (error: any) {
-    if (error.message.includes('Unauthorized') || error.message.includes('Access Denied')) {
-      res.status(403).json({ error: error.message });
-    } else {
-      res.status(500).json({ error: error.message || 'Unknown server error' });
-    }
-  }
+			if (q) filter.name = { $regex: q.toString(), $options: "i" };
+			if (category && category !== "All Categories")
+				filter.category = category;
+
+			const products = await ProductModel.find(filter);
+			return res.status(200).json(products);
+		}
+
+		return res.status(405).json({ error: "Method not allowed" });
+	} catch (error: any) {
+		const errorMessage = error?.message || "Unknown server error";
+
+		const statusCode =
+			errorMessage.includes("Unauthorized") ||
+			errorMessage.includes("Access Denied")
+				? 403
+				: 500;
+
+		return res.status(statusCode).json({ error: errorMessage });
+	}
 }
