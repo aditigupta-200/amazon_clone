@@ -6,7 +6,7 @@ import { toast } from 'react-hot-toast';
 import ProductModal from '@/components/ProductModal';
 import { useAuth } from '../context/AuthContext';
 import { useRouter } from "next/router";
-
+import { ChevronLeft, ChevronRight } from 'lucide-react';
 
 export interface ProductCardProps {
   product: Product;
@@ -20,22 +20,41 @@ export default function ProductCard({ product, onAddToCart }: ProductCardProps) 
   const [isModalOpen, setIsModalOpen] = useState(false);
   const { user, logout } = useAuth();
   const router = useRouter();
-  
-  const handleAddToCart = () => {
-     if (!user) {
-    router.push('/auth/login');
-    return;
-  }
+  const imageUrls = Array.isArray(product.imageUrl) ? product.imageUrl : [product.imageUrl];
+const [selectedImage, setSelectedImage] = useState(imageUrls[0] || '/fallback-image.jpg');
+ const [currentImageIndex, setCurrentImageIndex] = useState(0);
+
+  // console.log("0th image is",product.imageUrl[]);
+    const handleAddToCart = () => {
+    if (!user) {
+      router.push('/auth/login');
+      return;
+    }
     if (!product._id) {
       console.error("Product ID is missing:", product);
       return;
     }
     addItem(product);
+
+    // Prevent stock quantity from going negative
     if (product.stockQuantity > 0) {
       setStock(product._id, product.stockQuantity - 1);
     }
     toast.success(`${product.name} added to cart!`);
   };
+
+   const nextImage = () => {
+    setCurrentImageIndex((prev) => 
+      prev === imageUrls.length - 1 ? 0 : prev + 1
+    );
+  };
+
+  const prevImage = () => {
+    setCurrentImageIndex((prev) => 
+      prev === 0 ? imageUrls.length - 1 : prev - 1
+    );
+  };
+
 
   return (
     <div
@@ -43,13 +62,62 @@ export default function ProductCard({ product, onAddToCart }: ProductCardProps) 
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
     >
-      <div className="relative h-48 p-2 bg-white">
+   {/* Product Image Display */}
+      <div className="relative h-48 p-2 bg-white flex justify-center items-center">
         <img
-          src={product.imageUrl ?? '/fallback-image.jpg'}
+          src={selectedImage}
           alt={product.name ?? 'Product Image'}
           className="w-full h-full object-cover border rounded"
         />
       </div>
+
+       {imageUrls.length > 1 && (
+            <>
+              <button
+                onClick={prevImage}
+                className="absolute left-2 top-1/2 -translate-y-1/2 bg-white/80 hover:bg-white p-1 rounded-full shadow-md transition-all"
+              >
+                <ChevronLeft className="w-5 h-5" />
+              </button>
+              <button
+                onClick={nextImage}
+                className="absolute right-2 top-1/2 -translate-y-1/2 bg-white/80 hover:bg-white p-1 rounded-full shadow-md transition-all"
+              >
+                <ChevronRight className="w-5 h-5" />
+              </button>
+            </>
+      )}
+      
+           {imageUrls.length > 1 && (
+            <div className="absolute bottom-2 left-1/2 -translate-x-1/2 flex gap-1">
+              {imageUrls.map((_, index) => (
+                <div
+                  key={index}
+                  className={`w-2 h-2 rounded-full transition-all ${
+                    currentImageIndex === index ? 'bg-white w-4' : 'bg-white/50'
+                  }`}
+                />
+              ))}
+            </div>
+          )}
+
+      {/* Image Thumbnails */}
+      {Array.isArray(product.imageUrl) && imageUrls.length > 1 && (
+  <div className="flex mt-2 space-x-2 overflow-x-auto px-2">
+      {imageUrls.map((image, index) => (
+      <img
+        key={index}
+        src={image}
+        alt={`Product Image ${index + 1}`}
+        className={`w-12 h-12 object-cover border rounded cursor-pointer ${
+          selectedImage === image ? 'border-blue-500' : 'border-gray-300'
+        }`}
+        onClick={() => setSelectedImage(image)}
+      />
+    ))}
+  </div>
+)}
+
 
       <div className="p-4 flex flex-col h-[calc(400px-192px)]">
         <div className="mb-2">
@@ -69,7 +137,7 @@ export default function ProductCard({ product, onAddToCart }: ProductCardProps) 
         <div className="mt-auto">
           <div className="flex justify-between items-center mb-2">
             <span className="text-xl font-bold text-gray-900">
-              ${product.price.toFixed(2)}
+              ₹{product.price.toFixed(2)} {/* Displaying the price in INR */}
             </span>
             <span
               className={`text-sm px-2 py-1 rounded-full ${

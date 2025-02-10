@@ -1,6 +1,6 @@
-import { useState } from 'react';
-import { useRouter } from 'next/router';
-import { useProducts } from '../context/ProductContext';
+import { useState } from "react";
+import { useRouter } from "next/router";
+import { useProducts } from "../context/ProductContext";
 
 const ProductForm = () => {
   const router = useRouter();
@@ -12,54 +12,73 @@ const ProductForm = () => {
     price: number;
     category: string;
     stockQuantity: number;
-    image: File | null;
+    images: File[];
+    previewUrls: string[];
   }>({
-    name: '',
-    description: '',
+    name: "",
+    description: "",
     price: 0,
-    category: '',
+    category: "",
     stockQuantity: 0,
-    image: null,
+    images: [],
+    previewUrls: [],
   });
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
-    setFormData({ ...formData, [e.target.name]: e.target.value });
+    let { name, value } = e.target;
+
+    if (name === "price" || name === "stockQuantity") {
+      value = Math.max(0, Number(value)).toString();
+    }
+
+    setFormData({ ...formData, [name]: value });
   };
 
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (e.target.files && e.target.files[0]) {
-      setFormData({ ...formData, image: e.target.files[0] });
+    if (e.target.files) {
+      const files = Array.from(e.target.files);
+      const previewUrls = files.map(file => URL.createObjectURL(file));
+
+      setFormData(prev => ({
+        ...prev,
+        images: files,
+        previewUrls: previewUrls,
+      }));
     }
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     const formDataObj = new FormData();
-    
+
     Object.entries(formData).forEach(([key, value]) => {
-      if (value !== null) formDataObj.append(key, value as any);
+      if (key === "images") {
+        (value as File[]).forEach(file => formDataObj.append("images", file));
+      } else if (value !== null) {
+        formDataObj.append(key, value as any);
+      }
     });
-    
+
     try {
-      const token = localStorage.getItem('token');
-      const response = await fetch('/api/products', {
-        method: 'POST',
+      const token = localStorage.getItem("token");
+      const response = await fetch("/api/products", {
+        method: "POST",
         headers: {
-          'Authorization': `Bearer ${token}`
+          Authorization: `Bearer ${token}`,
         },
         body: formDataObj,
       });
 
       if (!response.ok) {
-        throw new Error('Failed to add product');
+        throw new Error("Failed to add product");
       }
 
       const newProduct = await response.json();
       addProductToContext(newProduct);
-      router.push('/products');
+      router.push("/products");
     } catch (error) {
-      console.error('Error adding product:', error);
-      alert('Failed to add product, please try again!');
+      console.error("Error adding product:", error);
+      alert("Failed to add product, please try again!");
     }
   };
 
@@ -74,8 +93,8 @@ const ProductForm = () => {
         <textarea name="description" value={formData.description} onChange={handleInputChange} className="w-full p-2 border rounded" required />
       </div>
       <div className="mb-4">
-        <label className="block mb-2">Price</label>
-        <input type="number" name="price" value={formData.price} onChange={handleInputChange} className="w-full p-2 border rounded" required />
+        <label className="block mb-2">Price (₹)</label>
+        <input type="number" name="price" value={formData.price} onChange={handleInputChange} className="w-full p-2 border rounded" required min="0" />
       </div>
       <div className="mb-4">
         <label className="block mb-2">Category</label>
@@ -95,11 +114,16 @@ const ProductForm = () => {
       </div>
       <div className="mb-4">
         <label className="block mb-2">Stock Quantity</label>
-        <input type="number" name="stockQuantity" value={formData.stockQuantity} onChange={handleInputChange} className="w-full p-2 border rounded" required />
+        <input type="number" name="stockQuantity" value={formData.stockQuantity} onChange={handleInputChange} className="w-full p-2 border rounded" required min="0" />
       </div>
       <div className="mb-4">
-        <label className="block mb-2">Product Image</label>
-        <input type="file" onChange={handleImageChange} required />
+        <label className="block mb-2">Product Images</label>
+        <input type="file" multiple onChange={handleImageChange} required />
+        <div className="flex gap-2 mt-2">
+          {formData.previewUrls.map((url, index) => (
+            <img key={index} src={url} alt="Preview" className="w-20 h-20 object-cover rounded border" />
+          ))}
+        </div>
       </div>
       <button type="submit" className="w-full bg-blue-500 text-white p-2 rounded hover:bg-blue-600">
         Add Product

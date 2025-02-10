@@ -1,21 +1,25 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
+import { toast } from 'react-toastify';
 import { CartItem, Product } from '../types/product';
+import { updateProduct } from '../utils/api'; // Import update API function
 
 interface CartStore {
   items: CartItem[];
-  addItem: (product: Product) => void;
+  addItem: (product: Product) => Promise<void>;
   removeItem: (productId: string) => void;
   updateQuantity: (productId: string, quantity: number) => void;
   clearCart: () => void;
-  setStock: (productId: string, stockQuantity: number) => void;
+  setStock: (productId: string, stockQuantity: number) => Promise<void>;
 }
 
 export const useCart = create<CartStore>()(
   persist(
     (set) => ({
       items: [],
-      addItem: (product) =>
+
+      // ✅ Updated `addItem` to handle stock updates
+      addItem: async (product) => {
         set((state) => {
           const existingItem = state.items.find((item) => item._id === product._id);
           if (existingItem) {
@@ -28,26 +32,46 @@ export const useCart = create<CartStore>()(
             };
           }
           return { items: [...state.items, { ...product, quantity: 1 }] };
-        }),
+        });
+
+        // ✅ Call `setStock` immediately when adding to cart
+        await useCart.getState().setStock(product._id as string, product.stockQuantity - 1);
+
+
+        // ✅ Show confirmation toast
+        toast.success(`${product.name} added to cart!`);
+      },
+
       removeItem: (productId) =>
         set((state) => ({
           items: state.items.filter((item) => item._id !== productId),
         })),
+
       updateQuantity: (productId, quantity) =>
         set((state) => ({
           items: state.items.map((item) =>
             item._id === productId ? { ...item, quantity } : item
           ),
         })),
+
       clearCart: () => set({ items: [] }),
 
-      // This function is used to update stock when quantity is changed in cart or added to cart.
-      setStock: (productId: string, stockQuantity: number) =>
-        set((state) => ({
-          items: state.items.map((item) =>
-            item._id === productId ? { ...item, stockQuantity } : item
-          ),
-        })),
+      // ✅ Updated `setStock` to update the backend
+      setStock: async (productId: string, stockQuantity: number) => {
+        try {
+          await updateProduct(productId, { stockQuantity });
+
+          // ✅ Optimistically update local state
+          set((state) => ({
+            items: state.items.map((item) =>
+              item._id === productId ? { ...item, stockQuantity } : item
+            ),
+          }));
+        } catch (error) {
+          console.error("Failed to update stock:", error);
+          toast.error("Failed to update stock.");
+        }
+      },
     }),
     {
       name: 'cart-storage', // persisting the cart state
