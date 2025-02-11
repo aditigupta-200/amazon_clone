@@ -15,15 +15,27 @@ export const getProductById = async (id: string): Promise<Product> => {
   }
 };
 
-export const updateProduct = async (id: string, product: Partial<Product>): Promise<Product> => {
+export const updateProduct = async (id: string, productData: Partial<Product>, images?: File[]): Promise<Product> => {
   try {
+    const formData = new FormData();
+
+    // Append product data
+    Object.entries(productData).forEach(([key, value]) => {
+      if (value !== undefined) {
+        formData.append(key, value as any);
+      }
+    });
+
+    // Handle image uploads
+    if (images && images.length > 0) {
+      images.forEach((image) => formData.append("images", image));
+    }
+
     const response = await fetch(`${API_PRODUCT_URL}/${id}`, {
       method: 'PUT',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify(product)
+      body: formData,
     });
+
     const data: Product = await response.json();
     return data;
   } catch (error) {
@@ -35,7 +47,7 @@ export const updateProduct = async (id: string, product: Partial<Product>): Prom
 export const deleteProduct = async (id: string): Promise<void> => {
   try {
     await fetch(`${API_PRODUCT_URL}/${id}`, {
-      method: 'DELETE'
+      method: 'DELETE',
     });
   } catch (error) {
     console.error(`Error deleting product with ID ${id}:`, error);
@@ -43,26 +55,41 @@ export const deleteProduct = async (id: string): Promise<void> => {
   }
 };
 
-export const addProduct = async (productData: Omit<Product, '_id'>): Promise<Product> => {
+export const addProduct = async (productData: Omit<Product, '_id' | 'imageUrl'>, images: File[]): Promise<Product> => {
   try {
+    const formData = new FormData();
+
+    // Append product data
+    Object.entries(productData).forEach(([key, value]) => {
+      if (value !== undefined) {
+        formData.append(key, value as any);
+      }
+    });
+
+    // Handle image uploads
+    images.forEach((image) => formData.append("images", image));
+
     const response = await fetch(API_PRODUCT_URL, {
       method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify(productData),
+      body: formData,
     });
+
+    if (!response.ok) {
+      throw new Error('Failed to add product');
+    }
+
     const data: Product = await response.json();
     return data;
   } catch (error) {
-    throw new Error('Failed to add product');
+    console.error('Error adding product:', error);
+    throw error;
   }
 };
 
 export const getProducts = async (q = '', category = '') => {
   try {
     const query = `q=${q}&category=${category}`;
-    const response = await fetch(`/api/products?${query}`);
+    const response = await fetch(`${API_PRODUCT_URL}?${query}`);
     return response.json();
   } catch (error) {
     console.error('Failed to fetch products:', error);
@@ -71,9 +98,14 @@ export const getProducts = async (q = '', category = '') => {
 };
 
 export const getProductsByCategory = async (category: string) => {
-  const response = await fetch(`/api/products?category=${category}`);
-  if (!response.ok) {
-    throw new Error('Failed to fetch products');
+  try {
+    const response = await fetch(`${API_PRODUCT_URL}?category=${category}`);
+    if (!response.ok) {
+      throw new Error('Failed to fetch products');
+    }
+    return response.json();
+  } catch (error) {
+    console.error(`Failed to fetch products for category ${category}:`, error);
+    throw error;
   }
-  return response.json();
 };

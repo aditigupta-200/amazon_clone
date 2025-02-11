@@ -1,4 +1,4 @@
-import { useState } from "react";
+import React, { useState } from "react";
 import { useRouter } from "next/router";
 import { useProducts } from "../context/ProductContext";
 
@@ -37,49 +37,90 @@ const ProductForm = () => {
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files) {
       const files = Array.from(e.target.files);
-      const previewUrls = files.map(file => URL.createObjectURL(file));
+      
+      // Validate file types and sizes
+      const validFiles = files.filter(file => {
+        const isValidType = ['image/jpeg', 'image/png', 'image/webp'].includes(file.type);
+        const isValidSize = file.size <= 5 * 1024 * 1024; // 5MB limit
+        return isValidType && isValidSize;
+      });
+
+      if (validFiles.length !== files.length) {
+        alert('Some files were rejected. Please only upload images (JPG, PNG, WebP) under 5MB.');
+      }
+
+      const previewUrls = validFiles.map(file => URL.createObjectURL(file));
 
       setFormData(prev => ({
         ...prev,
-        images: files,
+        images: validFiles,
         previewUrls: previewUrls,
       }));
     }
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    const formDataObj = new FormData();
+ const handleSubmit = async (e: React.FormEvent) => {
+  e.preventDefault();
+  const formDataObj = new FormData();
 
-    Object.entries(formData).forEach(([key, value]) => {
-      if (key === "images") {
-        (value as File[]).forEach(file => formDataObj.append("images", file));
-      } else if (value !== null) {
-        formDataObj.append(key, value as any);
-      }
+  // Append all form fields except images
+  Object.entries(formData).forEach(([key, value]) => {
+    if (key !== 'images' && key !== 'previewUrls' && value !== null) {
+      formDataObj.append(key, value as any);
+    }
+  });
+
+  // Append each image file (Ensure multiple files are sent)
+  formData.images.forEach((file) => {
+    formDataObj.append('images', file);  // This should match the backend field name
+  });
+
+  try {
+    const token = localStorage.getItem("token");
+    const response = await fetch("/api/products", {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+      body: formDataObj,
     });
 
-    try {
-      const token = localStorage.getItem("token");
-      const response = await fetch("/api/products", {
-        method: "POST",
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-        body: formDataObj,
-      });
+    const responseText = await response.text();
+    console.log(responseText);
 
-      if (!response.ok) {
-        throw new Error("Failed to add product");
-      }
-
-      const newProduct = await response.json();
-      addProductToContext(newProduct);
-      router.push("/products");
-    } catch (error) {
-      console.error("Error adding product:", error);
-      alert("Failed to add product, please try again!");
+    if (!response.ok) {
+      const errorData = JSON.parse(responseText);
+      throw new Error(errorData.message || "Failed to add product");
     }
+
+    const newProduct = JSON.parse(responseText);
+    addProductToContext(newProduct);
+    
+    // Clean up preview URLs
+    formData.previewUrls.forEach(url => URL.revokeObjectURL(url));
+    
+    router.push("/products");
+  } catch (error) {
+    console.error("Error adding product:", error);
+    alert(error instanceof Error ? error.message : "Failed to add product, please try again!");
+  }
+};
+
+
+
+  // Clean up preview URLs when component unmounts
+  React.useEffect(() => {
+    return () => {
+      formData.previewUrls.forEach(url => URL.revokeObjectURL(url));
+    };
+  }, []);
+
+  const removeImage = (index: number) => {
+    setFormData(prev => ({
+      ...prev,
+      images: prev.images.filter((_, i) => i !== index),
+      previewUrls: prev.previewUrls.filter((_, i) => i !== index),
+    }));
   };
 
   return (
@@ -118,14 +159,41 @@ const ProductForm = () => {
       </div>
       <div className="mb-4">
         <label className="block mb-2">Product Images</label>
-        <input type="file" multiple onChange={handleImageChange} required />
-        <div className="flex gap-2 mt-2">
+        <input 
+          type="file" 
+          multiple 
+          accept="image/jpeg,image/png,image/webp"
+          onChange={handleImageChange} 
+          className="w-full p-2 border rounded"
+          required={formData.images.length === 0}
+        />
+        <p className="text-sm text-gray-500 mt-1">
+          Upload up to 5 images (JPG, PNG, WebP) - Max 5MB each
+        </p>
+        <div className="flex flex-wrap gap-2 mt-2">
           {formData.previewUrls.map((url, index) => (
-            <img key={index} src={url} alt="Preview" className="w-20 h-20 object-cover rounded border" />
+            <div key={index} className="relative">
+              <img 
+                src={url} 
+                alt={`Preview ${index + 1}`} 
+                className="w-20 h-20 object-cover rounded border" 
+              />
+              <button
+                type="button"
+                onClick={() => removeImage(index)}
+                className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full w-5 h-5 flex items-center justify-center text-sm"
+              >
+                ×
+              </button>
+            </div>
           ))}
         </div>
       </div>
-      <button type="submit" className="w-full bg-blue-500 text-white p-2 rounded hover:bg-blue-600">
+      <button 
+        type="submit" 
+        className="w-full bg-blue-500 text-white p-2 rounded hover:bg-blue-600 disabled:bg-blue-300"
+        disabled={formData.images.length === 0}
+      >
         Add Product
       </button>
     </form>
