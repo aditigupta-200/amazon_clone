@@ -42,7 +42,7 @@
 // 	if (user.role !== "admin") throw new Error("Access Denied: Admins only");
 // };
 
-// // Function to parse `formidable` form data
+// // Function to parse formidable form data
 // const parseForm = async (
 // 	req: NextApiRequest
 // ): Promise<{ fields: any; files: any }> => {
