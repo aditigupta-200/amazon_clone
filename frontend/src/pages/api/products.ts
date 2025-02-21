@@ -173,12 +173,19 @@ export const config = {
     api: {
         bodyParser: false,
     },
+    api: {
+        bodyParser: false,
+    },
 };
 
 const JWT_SECRET = process.env.JWT_SECRET || "your_jwt_secret";
 if (!JWT_SECRET) throw new Error("JWT secret is missing!");
+if (!JWT_SECRET) throw new Error("JWT secret is missing!");
 
 cloudinaryV2.config({
+    cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
+    api_key: process.env.CLOUDINARY_API_KEY,
+    api_secret: process.env.CLOUDINARY_API_SECRET,
     cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
     api_key: process.env.CLOUDINARY_API_KEY,
     api_secret: process.env.CLOUDINARY_API_SECRET,
@@ -188,12 +195,22 @@ interface DecodedToken {
     id: string;
     email: string;
     role: "admin" | "user";
+    id: string;
+    email: string;
+    role: "admin" | "user";
 }
 
 const authMiddleware = (req: NextApiRequest): DecodedToken => {
     const token = req.headers.authorization?.split(" ")[1];
     if (!token) throw new Error("Unauthorized: No token provided");
+    const token = req.headers.authorization?.split(" ")[1];
+    if (!token) throw new Error("Unauthorized: No token provided");
 
+    try {
+        return jwt.verify(token, JWT_SECRET) as DecodedToken;
+    } catch {
+        throw new Error("Unauthorized: Invalid token");
+    }
     try {
         return jwt.verify(token, JWT_SECRET) as DecodedToken;
     } catch {
@@ -203,8 +220,17 @@ const authMiddleware = (req: NextApiRequest): DecodedToken => {
 
 const isAdmin = (user: DecodedToken) => {
     if (user.role !== "admin") throw new Error("Access Denied: Admins only");
+    if (user.role !== "admin") throw new Error("Access Denied: Admins only");
 };
 
+const parseForm = async (req: NextApiRequest) => {
+    const form = new IncomingForm({ multiples: true });
+    return new Promise<{ fields: any; files: any }>((resolve, reject) => {
+        form.parse(req, (err, fields, files) => {
+            if (err) reject(new Error("Form parsing failed"));
+            else resolve({ fields, files });
+        });
+    });
 const parseForm = async (req: NextApiRequest) => {
     const form = new IncomingForm({ multiples: true });
     return new Promise<{ fields: any; files: any }>((resolve, reject) => {
@@ -247,6 +273,10 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         if (req.method === "POST") {
             const user = authMiddleware(req);
             isAdmin(user);
+    try {
+        if (req.method === "POST") {
+            const user = authMiddleware(req);
+            isAdmin(user);
 
             const { fields, files } = await parseForm(req);
             console.log("fields", fields);
@@ -279,7 +309,14 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
             return res.status(201).json(product);
         }
+            return res.status(201).json(product);
+        }
 
+        if (req.method === "GET") {
+            const { q, category } = req.query;
+            const filter: any = {};
+            if (q) filter.name = { $regex: q.toString(), $options: "i" };
+            if (category && category !== "All Categories") filter.category = category;
         if (req.method === "GET") {
             const { q, category } = req.query;
             const filter: any = {};
@@ -289,7 +326,15 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
             const products = await ProductModel.find(filter).select("-__v"); // Excluding unneeded fields
             return res.status(200).json(products);
         }
+            const products = await ProductModel.find(filter).select("-__v"); // Excluding unneeded fields
+            return res.status(200).json(products);
+        }
 
+        return res.status(405).json({ error: "Method not allowed" });
+    } catch (error: any) {
+        console.error("Error:", error.message);
+        return res.status(error.message.includes("Unauthorized") ? 403 : 500).json({ error: error.message });
+    }
         return res.status(405).json({ error: "Method not allowed" });
     } catch (error: any) {
         console.error("Error:", error.message);
