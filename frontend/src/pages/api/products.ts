@@ -159,6 +159,9 @@
 // }
 
 
+
+
+
 // api/products.ts
 import type { NextApiRequest, NextApiResponse } from "next";
 import dbConnect from "../../lib/db";
@@ -173,19 +176,13 @@ export const config = {
     api: {
         bodyParser: false,
     },
-    api: {
-        bodyParser: false,
-    },
 };
 
+
 const JWT_SECRET = process.env.JWT_SECRET || "your_jwt_secret";
-if (!JWT_SECRET) throw new Error("JWT secret is missing!");
-if (!JWT_SECRET) throw new Error("JWT secret is missing!");
+if (!JWT_SECRET) throw new Error("JWT secret is missing!");;
 
 cloudinaryV2.config({
-    cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
-    api_key: process.env.CLOUDINARY_API_KEY,
-    api_secret: process.env.CLOUDINARY_API_SECRET,
     cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
     api_key: process.env.CLOUDINARY_API_KEY,
     api_secret: process.env.CLOUDINARY_API_SECRET,
@@ -195,71 +192,88 @@ interface DecodedToken {
     id: string;
     email: string;
     role: "admin" | "user";
-    id: string;
-    email: string;
-    role: "admin" | "user";
+    
 }
 
 const authMiddleware = (req: NextApiRequest): DecodedToken => {
     const token = req.headers.authorization?.split(" ")[1];
     if (!token) throw new Error("Unauthorized: No token provided");
-    const token = req.headers.authorization?.split(" ")[1];
-    if (!token) throw new Error("Unauthorized: No token provided");
+    
 
     try {
         return jwt.verify(token, JWT_SECRET) as DecodedToken;
     } catch {
         throw new Error("Unauthorized: Invalid token");
     }
-    try {
-        return jwt.verify(token, JWT_SECRET) as DecodedToken;
-    } catch {
-        throw new Error("Unauthorized: Invalid token");
-    }
+   
 };
 
 const isAdmin = (user: DecodedToken) => {
     if (user.role !== "admin") throw new Error("Access Denied: Admins only");
-    if (user.role !== "admin") throw new Error("Access Denied: Admins only");
 };
+
+// const parseForm = async (req: NextApiRequest) => {
+//     const form = new IncomingForm({ multiples: true });
+//     return new Promise<{ fields: any; files: any }>((resolve, reject) => {
+//         form.parse(req, (err, fields, files) => {
+//             if (err) reject(new Error("Form parsing failed"));
+//             else resolve({ fields, files });
+//         });
+//     });
+
+// };
 
 const parseForm = async (req: NextApiRequest) => {
     const form = new IncomingForm({ multiples: true });
+
     return new Promise<{ fields: any; files: any }>((resolve, reject) => {
         form.parse(req, (err, fields, files) => {
-            if (err) reject(new Error("Form parsing failed"));
-            else resolve({ fields, files });
-        });
-    });
-const parseForm = async (req: NextApiRequest) => {
-    const form = new IncomingForm({ multiples: true });
-    return new Promise<{ fields: any; files: any }>((resolve, reject) => {
-        form.parse(req, (err, fields, files) => {
-            if (err) reject(new Error("Form parsing failed"));
-            else resolve({ fields, files });
+            if (err) {
+                console.error("Form parsing error:", err);
+                reject(new Error("Form parsing failed"));
+            } else {
+                console.log("Parsed fields:", fields);
+                console.log("Parsed files:", files);
+                resolve({ fields, files });
+            }
         });
     });
 };
+
 
 
 const uploadImagesToCloudinary = async (files: any[]): Promise<string[]> => {
     return Promise.all(
         files.map((file) => {
+            console.log("Hello world");
+            
             return new Promise<string>((resolve, reject) => {
+                 console.log("Uploading file:", file.filepath);
                 const uploadStream = cloudinaryV2.uploader.upload_stream(
                     { folder: "products" },
                     (error, result) => {
                         if (error || !result) {
+                            console.log("Cloudinary upload error");
+                            
                             reject(new Error("Image upload failed"));
                         } else {
+                             console.log("Cloudinary Upload Success:", result.secure_url);
                             resolve(result.secure_url);
                         }
                     }
                 );
 
-                // ✅ Correct way: Read the file as a stream
-                const fileStream = createReadStream(file.filepath);
-                fileStream.pipe(uploadStream);
+            //     // ✅ Correct way: Read the file as a stream
+            //     const fileStream = createReadStream(file.filepath);
+                //     fileStream.pipe(uploadStream);
+                
+                      try {
+                    const fileStream = createReadStream(file.filepath);
+                    fileStream.pipe(uploadStream);
+                } catch (err) {
+                    console.error("Error reading file stream:", err);
+                    reject(new Error("Failed to read file stream"));
+                }
             });
         })
     );
@@ -273,13 +287,10 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         if (req.method === "POST") {
             const user = authMiddleware(req);
             isAdmin(user);
-    try {
-        if (req.method === "POST") {
-            const user = authMiddleware(req);
-            isAdmin(user);
+ 
 
             const { fields, files } = await parseForm(req);
-            console.log("fields", fields);
+            // console.log("fields", fields);
             const name = fields.name?.[0];  // Extract first element
             const category = fields.category?.[0];
             const price = Number(fields.price?.[0]);  // Convert string to number
@@ -290,11 +301,20 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
                 return res.status(400).json({ error: "Missing required fields" });
             }
 
+            // const imageFiles = files.images;
+            // console.log("imageFiles", imageFiles);
+            // if (!imageFiles) {
+            //     return res.status(400).json({ error: "At least one image is required" });
+            // }
+
             const imageFiles = files.images;
-            console.log("imageFiles", imageFiles);
-            if (!imageFiles) {
-                return res.status(400).json({ error: "At least one image is required" });
-            }
+console.log("Parsed Image Files:", imageFiles);
+
+            if (!imageFiles || (Array.isArray(imageFiles) && imageFiles.length === 0)) {
+    
+    return res.status(400).json({ error: "At least one image is required" });
+}
+
 
             const imageUrl = await uploadImagesToCloudinary(Array.isArray(imageFiles) ? imageFiles : [imageFiles]);
 
@@ -306,38 +326,24 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
                 stockQuantity: Number(stockQuantity),
                 imageUrl,
             });
+    console.log("Products ", product);
 
             return res.status(201).json(product);
         }
-            return res.status(201).json(product);
-        }
+        
 
         if (req.method === "GET") {
             const { q, category } = req.query;
             const filter: any = {};
             if (q) filter.name = { $regex: q.toString(), $options: "i" };
             if (category && category !== "All Categories") filter.category = category;
-        if (req.method === "GET") {
-            const { q, category } = req.query;
-            const filter: any = {};
-            if (q) filter.name = { $regex: q.toString(), $options: "i" };
-            if (category && category !== "All Categories") filter.category = category;
-
+        
             const products = await ProductModel.find(filter).select("-__v"); // Excluding unneeded fields
             return res.status(200).json(products);
         }
-            const products = await ProductModel.find(filter).select("-__v"); // Excluding unneeded fields
-            return res.status(200).json(products);
-        }
-
         return res.status(405).json({ error: "Method not allowed" });
     } catch (error: any) {
         console.error("Error:", error.message);
-        return res.status(error.message.includes("Unauthorized") ? 403 : 500).json({ error: error.message });
-    }
-        return res.status(405).json({ error: "Method not allowed" });
-    } catch (error: any) {
-        console.error("Error:", error.message);
-        return res.status(error.message.includes("Unauthorized") ? 403 : 500).json({ error: error.message });
+        return res.status(typeof error.message === "string" && error.message.includes("Unauthorized") ? 403 : 500).json({ error: error.message });
     }
 }

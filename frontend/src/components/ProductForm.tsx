@@ -77,6 +77,7 @@ const ProductForm = () => {
 
   try {
     const token = localStorage.getItem("token");
+    
     const response = await fetch("/api/products", {
       method: "POST",
       headers: {
@@ -84,9 +85,10 @@ const ProductForm = () => {
       },
       body: formDataObj,
     });
-
+    const contentType = response.headers.get("content-type");
+    
     const responseText = await response.text();
-    console.log(responseText);
+    console.log("responseText", responseText);
 
     if (!response.ok) {
       const errorData = JSON.parse(responseText);
@@ -101,7 +103,7 @@ const ProductForm = () => {
     
     router.push("/products");
   } catch (error) {
-    console.error("Error adding product:", error);
+    // console.error("Error adding product:", error);
     alert(error instanceof Error ? error.message : "Failed to add product, please try again!");
   }
 };
