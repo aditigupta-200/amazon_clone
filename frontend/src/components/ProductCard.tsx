@@ -25,7 +25,7 @@ export default function ProductCard({ product, onAddToCart }: ProductCardProps) 
   const [selectedImage, setSelectedImage] = useState(imageUrls[0] || '/fallback-image.jpg');
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
 
-  const handleAddToCart = () => {
+  const handleAddToCart = async() => {
     if (!user) {
       router.push('/auth/login');
       return;
@@ -36,9 +36,23 @@ export default function ProductCard({ product, onAddToCart }: ProductCardProps) 
     }
     addItem(product);
 
-    if (product.stockQuantity > 0) {
-      setStock(product._id, product.stockQuantity - 1);
+
+     try {
+    const response = await fetch(`/api/products/${product._id}`, { method: 'GET' });
+    const updatedProduct = await response.json();
+    
+    if (updatedProduct.stockQuantity > 0) {
+      addItem(updatedProduct);
+      setStock(updatedProduct._id, updatedProduct.stockQuantity - 1);
+      toast.success(`${updatedProduct.name} added to cart!`);
+    } else {
+      toast.error("This product is out of stock.");
     }
+  } catch (error) {
+    console.error("Error fetching updated product stock:", error);
+    toast.error("Could not add to cart.");
+    }
+    
     toast.success(`${product.name} added to cart!`);
   };
 
@@ -54,7 +68,7 @@ export default function ProductCard({ product, onAddToCart }: ProductCardProps) 
 
   return (
     <div
-      className="relative group bg-white border rounded-xl shadow-sm hover:shadow-xl transition-all duration-300 overflow-hidden h-[400px]"
+      className="relative group bg-white border rounded-xl shadow-sm hover:shadow-xl transition-all duration-300 overflow-hidden h-[500px]"
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
     >
@@ -114,7 +128,7 @@ export default function ProductCard({ product, onAddToCart }: ProductCardProps) 
         </div>
       )}
 
-      <div className="p-4 flex flex-col h-[calc(400px-192px)]">
+      <div className="p-4 flex flex-col h-[calc(500px-300px)]">
         <div className="mb-2">
           <span className="text-xs font-medium bg-blue-100 text-blue-800 px-2 py-1 rounded-full">
             {product.category}
@@ -175,3 +189,4 @@ export default function ProductCard({ product, onAddToCart }: ProductCardProps) 
     </div>
   );
 }
+

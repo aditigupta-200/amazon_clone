@@ -11,6 +11,7 @@ export interface Product {
   quantity?: number;
   createdAt?: Date;
   updatedAt?: Date;
+  uploadedBy?: string;
 }
 
 
